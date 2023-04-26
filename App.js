@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, ScrollView, ToastAndroid } from 'react-native';
+import { StyleSheet, Text, View, Button, ScrollView, ToastAndroid, Alert
+, Modal, TextInput } from 'react-native';
 import { CheckBox } from '@rneui/themed';
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, child, get } from "firebase/database";
@@ -15,6 +16,8 @@ export default function App() {
   const [option4, setOption4] = useState("Loading option...");
   const [currentAnswer, setCurrentAnswer] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
+  const [readingTime, setReadingTime] = useState(0);
+  // var readingTime = 15;
 
   const readQuestion = async() =>{
     //Reset the option
@@ -33,6 +36,7 @@ export default function App() {
         setOption3(snapshot.val().option_3);
         setOption4(snapshot.val().option_4);
         setCurrentAnswer(snapshot.val().answer);
+        setReadingTime(15);
       } else {
         console.log("No data available");
       }
@@ -52,24 +56,72 @@ export default function App() {
     }
   };
 
+  const startGame = () => {
+
+  };
+
   const showToast = (message) => {
     ToastAndroid.show(message, ToastAndroid.SHORT);
   };
 
+  function displayReadingTimer(){
+    setReadingTime(readingTime - 1);
+  }
+
   useEffect(() => {
-    if(readNextQuestion){
-      readQuestion();
+
+    console.log("Reading Time b4 counter: " + readingTime)
+    if(readingTime !== 0){
+      const interval = setInterval(() => displayReadingTimer(), 1000);
+      return () => clearInterval(interval);
     }
+
   });
 
   return (
     <ScrollView style={styles.container}>
+      <Modal>
+        <View style={styles.gameRulesView}>
+          <Text style={[styles.gameRulesText, styles.gameRulesTitle]}>Game Rules:</Text>
+
+          <Text style={styles.gameRulesText}>
+            1) There will be a total of 20 questions to answer, questions will be selected randomly from the database.
+          </Text>
+
+          <Text style={styles.gameRulesText}>
+            2) The scores that you get for every correct answer will be dependent on the time that you use, the quicker you answer, the more scores you will get from it.
+          </Text>
+
+          <Text style={styles.gameRulesText}>
+            3) The more you answer correctly continuously, the more points you can get for the next correct answer. Every extra continuous correct answer will add extra one mark for the next correct answer.
+          </Text>
+
+          <Text style={styles.gameRulesText}>
+            4) Any answer that is given later than 5 seconds, no scores will be given, but it will be counted as a continuous correct answer.
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Type your name"
+            keyboardType="default"
+          />
+
+          <View>
+            <Button
+              title="Start"
+              onPress={startGame}
+            />
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.scoreboard}>
         <Text style={styles.boardText}>Total Scores:</Text>
         <Text style={styles.boardText}>Continuous Correct Answer:</Text>
         <Text style={styles.boardText}>Total Correct Answer:</Text>
       </View>
 
+      <Text style={styles.readingTime}>Reading Time left: {readingTime}</Text>
       <Text style={styles.questionText}>{questionCount + ". " + questionText}</Text>
 
       <CheckBox
@@ -134,5 +186,25 @@ const styles = StyleSheet.create({
   },
   boardText:{
     color: "white"
-  }
+  },
+  readingTime:{
+    marginTop: 10,
+    fontSize: 18
+  },
+  gameRulesView:{
+    padding: 20,
+  },
+  gameRulesText:{
+    fontSize:15,
+    marginBottom:10
+  },
+  gameRulesTitle:{
+    fontWeight: 'bold'
+  },
+  input: {
+    height: 40,
+    borderWidth: 1,
+    marginBottom: 10,
+    padding: 10,
+  },
 });
