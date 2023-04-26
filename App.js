@@ -17,6 +17,7 @@ export default function App() {
   const [currentAnswer, setCurrentAnswer] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
+  const [username, setUsername] = useState("");
   // var readingTime = 15;
 
   const readQuestion = async() =>{
@@ -56,8 +57,23 @@ export default function App() {
     }
   };
 
-  const startGame = () => {
-
+  const startGame = async () => {
+    //Check user exists
+    await get(child(dbRef, `users/${username}`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        Alert.alert('Invalid Username', 'This username already exists, please choose another one', [
+          {
+            text: 'Confirm',
+            onPress: () => console.log('Ask me later pressed'),
+          },
+        ]);
+      } 
+      else {
+        console.log("New user");
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
   };
 
   const showToast = (message) => {
@@ -102,6 +118,7 @@ export default function App() {
 
           <TextInput
             style={styles.input}
+            onChangeText={text => setUsername(text)}
             placeholder="Type your name"
             keyboardType="default"
           />
