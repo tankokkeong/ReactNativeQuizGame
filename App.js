@@ -20,7 +20,6 @@ export default function App() {
   const [readingTime, setReadingTime] = useState(0);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPasswordInput, setShowPasswordInput] = useState(false);
   const [startGameAction, setStartGameAction] = useState("None");
   // var readingTime = 15;
 
@@ -62,25 +61,44 @@ export default function App() {
   };
 
   const startGame = async () => {
-    //Check user exists
-    await get(child(dbRef, `users/${username}`)).then((snapshot) => {
-      if (snapshot.exists()) {
-        Alert.alert('Invalid Username', 'This username already exists, please choose another one', [
+
+    if(startGameAction === "Create User"){
+      if(username.length === 0 || password.length === 0){
+        Alert.alert('Invalid Input', 'You cannot leave empty field(s)!', [
           {
             text: 'Confirm',
-            onPress: () => console.log('Ask me later pressed'),
           },
         ]);
-
-        setShowPasswordInput(false);
-      } 
-      else {
-        console.log("New user");
-        setShowPasswordInput(true);
       }
-    }).catch((error) => {
-      console.error(error);
-    });
+      else{
+        //Check user exists
+        await get(child(dbRef, `users/${username}`)).then((snapshot) => {
+          if (snapshot.exists()) {
+            Alert.alert('Invalid Username', 'This username already exists, please choose another one', [
+              {
+                text: 'Confirm',
+              },
+            ]);
+          } 
+          else {
+            console.log("New user");
+          }
+        }).catch((error) => {
+          console.error(error);
+        });
+      }
+      
+    }
+    else if(startGameAction === "Login"){
+      if(username.length === 0 || password.length === 0){
+        Alert.alert('Invalid Input', 'You cannot leave empty field(s)!', [
+          {
+            text: 'Confirm',
+          },
+        ]);
+      }
+    }
+    
   };
 
   function displayReadingTimer(){
@@ -151,17 +169,14 @@ export default function App() {
                   keyboardType="default"
                 />
 
-                {
-                  showPasswordInput && 
-                  <View>
-                    <TextInput
-                      style={styles.input}
-                      onChangeText={text => setPassword(text)}
-                      placeholder="Please enter password to register yourself"
-                      keyboardType="visible-password"
-                    />
-                  </View>
-                }
+                <View>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={text => setPassword(text)}
+                    placeholder="Please enter password to register yourself"
+                    keyboardType="visible-password"
+                  />
+                </View>
 
                 <View>
                   <Button
@@ -174,7 +189,7 @@ export default function App() {
                   <Button
                     title="Back"
                     color="#bab9b5"
-                    onPress={() => setStartGameAction("None")}
+                    onPress={() => {setStartGameAction("None"); setUsername(""); setPassword("")}}
                   />
                 </View>
 
@@ -214,7 +229,7 @@ export default function App() {
                   <Button
                     title="Back"
                     color="#bab9b5"
-                    onPress={() => setStartGameAction("None")}
+                    onPress={() => {setStartGameAction("None"); setUsername(""); setPassword("")}}
                   />
                 </View>
 
