@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, Button, ScrollView, ToastAndroid, Alert
 , Modal, TextInput } from 'react-native';
 import { CheckBox } from '@rneui/themed';
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, child, get } from "firebase/database";
+import { getDatabase, ref, child, get, set } from "firebase/database";
 import { dbRef } from './firebaseConfig';
 import { hashCode, showToast } from './helper';
 
@@ -21,7 +21,7 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [startGameAction, setStartGameAction] = useState("None");
-  // var readingTime = 15;
+  const db = getDatabase();
 
   const readQuestion = async() =>{
     //Reset the option
@@ -63,6 +63,7 @@ export default function App() {
   const startGame = async () => {
 
     if(startGameAction === "Create User"){
+
       if(username.length === 0 || password.length === 0){
         Alert.alert('Invalid Input', 'You cannot leave empty field(s)!', [
           {
@@ -82,6 +83,25 @@ export default function App() {
           } 
           else {
             console.log("New user");
+
+            set(ref(db, 'users/' + username), {
+              continuousCorrect: 0,
+              highestScore: 0,
+              scores: 0,
+              totalCorrect: 0,
+              username: username,
+              password: hashCode(password)
+            })
+            .then(() => {
+              Alert.alert('Successful', 'User created sucessful!', [
+                {
+                  text: 'Confirm',
+                },
+              ]);
+            })
+            .catch((error) => {
+              // The write failed...
+            });
           }
         }).catch((error) => {
           console.error(error);
@@ -90,12 +110,40 @@ export default function App() {
       
     }
     else if(startGameAction === "Login"){
+
       if(username.length === 0 || password.length === 0){
         Alert.alert('Invalid Input', 'You cannot leave empty field(s)!', [
           {
             text: 'Confirm',
           },
         ]);
+      }
+      else{
+        //Check user exists
+        await get(child(dbRef, `users/${username}`)).then((snapshot) => {
+          if (snapshot.exists()) {
+            if(username === snapshot.val().username && hashCode(password) === snapshot.val().password){
+              console.log("Login Successful!");
+            }
+            else{
+              Alert.alert('Invalid Login', 'Incorrect username or password!', [
+                {
+                  text: 'Confirm',
+                },
+              ]);
+            }
+          } 
+          else {
+              Alert.alert('Invalid Login', 'Incorrect username or password!', [
+                {
+                  text: 'Confirm',
+                },
+              ]);
+          }
+              
+        }).catch((error) => {
+          console.error(error);
+        });
       }
     }
     
@@ -217,7 +265,6 @@ export default function App() {
                   />
                 </View>
                 
-
                 <View>
                   <Button
                     title="Login"
