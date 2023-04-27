@@ -5,6 +5,7 @@ import { CheckBox } from '@rneui/themed';
 import React, { useState, useEffect } from 'react';
 import { getDatabase, ref, child, get } from "firebase/database";
 import { dbRef } from './firebaseConfig';
+import { hashCode, showToast } from './helper';
 
 export default function App() {
   const [answerCheck, setAnswerCheck] = useState(0);
@@ -18,6 +19,9 @@ export default function App() {
   const [questionCount, setQuestionCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [startGameAction, setStartGameAction] = useState("None");
   // var readingTime = 15;
 
   const readQuestion = async() =>{
@@ -67,17 +71,16 @@ export default function App() {
             onPress: () => console.log('Ask me later pressed'),
           },
         ]);
+
+        setShowPasswordInput(false);
       } 
       else {
         console.log("New user");
+        setShowPasswordInput(true);
       }
     }).catch((error) => {
       console.error(error);
     });
-  };
-
-  const showToast = (message) => {
-    ToastAndroid.show(message, ToastAndroid.SHORT);
   };
 
   function displayReadingTimer(){
@@ -86,7 +89,7 @@ export default function App() {
 
   useEffect(() => {
 
-    console.log("Reading Time b4 counter: " + readingTime)
+    console.log("Start Game Action: " + startGameAction)
     if(readingTime !== 0){
       const interval = setInterval(() => displayReadingTimer(), 1000);
       return () => clearInterval(interval);
@@ -116,18 +119,109 @@ export default function App() {
             4) Any answer that is given later than 5 seconds, no scores will be given, but it will be counted as a continuous correct answer.
           </Text>
 
-          <TextInput
-            style={styles.input}
-            onChangeText={text => setUsername(text)}
-            placeholder="Type your name"
-            keyboardType="default"
-          />
-
           <View>
-            <Button
-              title="Start"
-              onPress={startGame}
-            />
+
+          {
+            startGameAction === "None" && 
+            <View>
+              <View>
+                <Button
+                  title="New User"
+                  onPress={() => setStartGameAction("Create User")}
+                />
+              </View>
+
+              <View style={styles.loginBtn}>
+                <Button
+                  title="Login"
+                  onPress={() => setStartGameAction("Login")}
+                />
+              </View>
+            </View>
+          }
+
+            {
+              startGameAction === "Create User" && 
+              <View>
+
+                <TextInput
+                  style={styles.input}
+                  onChangeText={text => setUsername(text)}
+                  placeholder="Type your name"
+                  keyboardType="default"
+                />
+
+                {
+                  showPasswordInput && 
+                  <View>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={text => setPassword(text)}
+                      placeholder="Please enter password to register yourself"
+                      keyboardType="visible-password"
+                    />
+                  </View>
+                }
+
+                <View>
+                  <Button
+                    title="Create User"
+                    onPress={startGame}
+                  />
+                </View>
+
+                <View style={styles.backBtn}>
+                  <Button
+                    title="Back"
+                    color="#bab9b5"
+                    onPress={() => setStartGameAction("None")}
+                  />
+                </View>
+
+              </View>
+
+            }
+
+            {
+              startGameAction === "Login" && 
+              <View>
+
+                <TextInput
+                  style={styles.input}
+                  onChangeText={text => setUsername(text)}
+                  placeholder="Type your name"
+                  keyboardType="default"
+                />
+
+                <View>
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={text => setPassword(text)}
+                    placeholder="Password"
+                    keyboardType="visible-password"
+                  />
+                </View>
+                
+
+                <View>
+                  <Button
+                    title="Login"
+                    onPress={startGame}
+                  />
+                </View>
+
+                <View style={styles.backBtn}>
+                  <Button
+                    title="Back"
+                    color="#bab9b5"
+                    onPress={() => setStartGameAction("None")}
+                  />
+                </View>
+
+              </View>
+
+            }
+            
           </View>
         </View>
       </Modal>
@@ -224,4 +318,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     padding: 10,
   },
+  loginBtn: {
+    marginTop: 10,
+  },
+  backBtn: {
+    marginTop: 10,
+  }
 });
