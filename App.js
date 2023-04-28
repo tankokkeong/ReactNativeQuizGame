@@ -1,9 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, ScrollView, ToastAndroid, Alert
+import { StyleSheet, Text, View, Button, ScrollView, Alert
 , Modal, TextInput } from 'react-native';
 import { CheckBox } from '@rneui/themed';
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, child, get, set } from "firebase/database";
+import { getDatabase, ref, child, get, set, update} from "firebase/database";
 import { dbRef } from './firebaseConfig';
 import { hashCode, showToast } from './helper';
 
@@ -21,6 +21,11 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [startGameAction, setStartGameAction] = useState("None");
+  const [modalVisibile, setModalVisible] = useState(true);
+  const [totalScores, setTotalScores] = useState(0);
+  const [conCorrectAns, setConCorrectAns] = useState(0);
+  const [totalCorrectAns, setTotalCorrectAns] = useState(0);
+  const [userHighestScore, setUserHighestScore] = useState(0);
   const db = getDatabase();
 
   const readQuestion = async() =>{
@@ -49,10 +54,52 @@ export default function App() {
     });
   }
 
-  const amswerQuestion = (answer) => {
+  const answerQuestion = async (answer) => {
     setAnswerCheck(answer);
     console.log("Answer given: " + answer)
     if(answer === currentAnswer){
+      var totalScr = totalScores;
+      var continuousCorrect = conCorrectAns;
+      var totalCorrect = totalCorrectAns;
+      var highestScore = userHighestScore;
+
+      //Score calculation
+      var scoreOfTheRound;
+
+      if(readingTime >= 10){
+          scoreOfTheRound = 5 + (readingTime - 10) + continuousCorrect;
+      }
+      else{
+          scoreOfTheRound = 0;
+      }
+
+      var newTotal = totalScores + scoreOfTheRound;
+
+      const updates = {};
+      updates[`users/${username}/continuousCorrect`] = conCorrectAns + 1;
+      updates[`users/${username}/highestScore`] = newTotal > highestScore ? newTotal : highestScore;
+      updates[`users/${username}/scores`] = newTotal;
+      updates[`users/${username}/totalCorrect`] = totalCorrectAns + 1;
+
+      await update(ref(db), updates).then(() => {
+        // Data saved successfully!
+        console.log("Successfully update")
+      })
+      .catch((error) => {
+        // The write failed...
+        console.log(error)
+      });
+
+      //Check the highest score
+      if(newTotal > highestScore){
+        setUserHighestScore(newTotal);
+      }
+      
+      //Increase the total correct
+      setTotalCorrectAns(totalCorrectAns + 1);
+      setConCorrectAns(conCorrectAns + 1);
+      setTotalScores(newTotal);
+
       showToast("You get it correct!");
     }
     else{
@@ -124,6 +171,9 @@ export default function App() {
           if (snapshot.exists()) {
             if(username === snapshot.val().username && hashCode(password) === snapshot.val().password){
               console.log("Login Successful!");
+              readQuestion();
+              setModalVisible(false);
+              setUserHighestScore(snapshot.val().highestScore);
             }
             else{
               Alert.alert('Invalid Login', 'Incorrect username or password!', [
@@ -151,6 +201,10 @@ export default function App() {
 
   function displayReadingTimer(){
     setReadingTime(readingTime - 1);
+
+    if(readingTime - 1 === 0){
+      readQuestion();
+    }
   }
 
   useEffect(() => {
@@ -165,7 +219,7 @@ export default function App() {
 
   return (
     <ScrollView style={styles.container}>
-      <Modal>
+      <Modal visible={modalVisibile}>
         <View style={styles.gameRulesView}>
           <Text style={[styles.gameRulesText, styles.gameRulesTitle]}>Game Rules:</Text>
 
@@ -289,9 +343,9 @@ export default function App() {
       </Modal>
 
       <View style={styles.scoreboard}>
-        <Text style={styles.boardText}>Total Scores:</Text>
-        <Text style={styles.boardText}>Continuous Correct Answer:</Text>
-        <Text style={styles.boardText}>Total Correct Answer:</Text>
+        <Text style={styles.boardText}>Total Scores: {totalScores}</Text>
+        <Text style={styles.boardText}>Continuous Correct Answer: {conCorrectAns}</Text>
+        <Text style={styles.boardText}>Total Correct Answer:{totalCorrectAns}</Text>
       </View>
 
       <Text style={styles.readingTime}>Reading Time left: {readingTime}</Text>
@@ -302,7 +356,7 @@ export default function App() {
           disabled={answerCheck !== 0 || option1 === "Loading option..."}
           title={option1}
           checked={answerCheck === option1}
-          onPress={() => amswerQuestion(option1)}
+          onPress={() => answerQuestion(option1)}
         />
 
         <CheckBox
@@ -310,7 +364,7 @@ export default function App() {
           disabled={answerCheck !== 0 || option2 === "Loading option..."}
           title={option2}
           checked={answerCheck === option2}
-          onPress={() => amswerQuestion(option2)}
+          onPress={() => answerQuestion(option2)}
         />
 
         <CheckBox
@@ -318,7 +372,7 @@ export default function App() {
           disabled={answerCheck !== 0 || option3 === "Loading option..."}
           title={option3}
           checked={answerCheck === option3}
-          onPress={() => amswerQuestion(option3)}
+          onPress={() => answerQuestion(option3)}
         />
 
         <CheckBox
@@ -326,7 +380,7 @@ export default function App() {
           disabled={answerCheck !== 0 || option4 === "Loading option..."}
           title={option4}
           checked={answerCheck === option4}
-          onPress={() => amswerQuestion(option4)}
+          onPress={() => answerQuestion(option4)}
         />
 
       <Button

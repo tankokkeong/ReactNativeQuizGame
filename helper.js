@@ -1,3 +1,5 @@
+import { ToastAndroid } from "react-native";
+
 export const hashCode = (code) => {
     return code.split("").reduce(function(a, b) {
         a = ((a << 5) - a) + b.charCodeAt(0);
@@ -7,4 +9,4 @@ export const hashCode = (code) => {
 
 export const showToast = (message) => {
     ToastAndroid.show(message, ToastAndroid.SHORT);
-  };
+};
