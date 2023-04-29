@@ -2,7 +2,6 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
     container: {
-        flex: 1,
         backgroundColor: '#fff',
         padding: 20,
     },
@@ -51,8 +50,26 @@ export const styles = StyleSheet.create({
     },
     rankingBoard:{
         backgroundColor: "black",
+        padding: 10,
+        marginTop: 15,
+        marginBottom: 15,
     },
     rankingBoardText:{
         color: "white",
+    },
+    rankingBoardTitle:{
+        color: "white",
+        fontSize: 15,
+        textAlign: "center"
+    },
+    rankingListContainer:{
+        flex: 1,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        alignItems: 'flex-start', // if you want to fill rows left to right
+        marginTop: 10,
+    },
+    rankingItem: {
+        width: '50%' // is 50% of container width
     }
 });

@@ -23,7 +23,7 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [startGameAction, setStartGameAction] = useState("None");
-  const [modalVisibile, setModalVisible] = useState(false);
+  const [modalVisibile, setModalVisible] = useState(true);
   const [totalScores, setTotalScores] = useState(0);
   const [conCorrectAns, setConCorrectAns] = useState(0);
   const [totalCorrectAns, setTotalCorrectAns] = useState(0);
@@ -31,8 +31,13 @@ export default function App() {
   const [displayRankingBoard, setDisplayRankingBoard] = useState(true);
   const [scoreRanking, setScoreRanking] = useState([]);
   const db = getDatabase();
+  var ranking = 0;
 
   const readQuestion = async() =>{
+    
+    if(displayRankingBoard){
+      rankingBoard();
+    }
 
     //Block the option
     setAnswerCheck(-1);
@@ -215,25 +220,24 @@ export default function App() {
   }
 
   const rankingBoard = () => {
-    const rankingRef = query(ref(db, 'users/'), orderByChild("highestScore"), limitToLast(3));
+    const rankingRef = query(ref(db, 'users/'), orderByChild("highestScore"), limitToLast(10));
     
     onValue(rankingRef, (snapshot) => {
-      console.log("Is Array: " + Array.isArray(snapshot))
+      const tempRankingArr = [];
+
       snapshot.forEach((snapChild) => {
         const data = snapChild.val();
-        console.log(data)
+        tempRankingArr.push(data);
+        // console.log(data)
       });
-
+      tempRankingArr.reverse();
+      setScoreRanking(tempRankingArr);
     });
 
     setDisplayRankingBoard(false);
   };
 
   useEffect(() => {
-
-    if(displayRankingBoard){
-      rankingBoard();
-    }
 
     if(readingTime !== 0){
       const interval = setInterval(() => displayReadingTimer(), 1000);
@@ -246,189 +250,233 @@ export default function App() {
 
   });
 
+  const logo = {
+    uri: 'https://reactnative.dev/img/tiny_logo.png',
+    width: 64,
+    height: 64,
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Modal visible={modalVisibile}>
-        <View style={styles.gameRulesView}>
-          <Text style={[styles.gameRulesText, styles.gameRulesTitle]}>Game Rules:</Text>
+    <ScrollView>
+      <View style={styles.container}>
+        <Modal visible={modalVisibile}>
+          <View style={styles.gameRulesView}>
+            <Text style={[styles.gameRulesText, styles.gameRulesTitle]}>Game Rules:</Text>
 
-          <Text style={styles.gameRulesText}>
-            1) There will be a total of 20 questions to answer, questions will be selected randomly from the database.
-          </Text>
+            <Text style={styles.gameRulesText}>
+              1) There will be a total of 20 questions to answer, questions will be selected randomly from the database.
+            </Text>
 
-          <Text style={styles.gameRulesText}>
-            2) The scores that you get for every correct answer will be dependent on the time that you use, the quicker you answer, the more scores you will get from it.
-          </Text>
+            <Text style={styles.gameRulesText}>
+              2) The scores that you get for every correct answer will be dependent on the time that you use, the quicker you answer, the more scores you will get from it.
+            </Text>
 
-          <Text style={styles.gameRulesText}>
-            3) The more you answer correctly continuously, the more points you can get for the next correct answer. Every extra continuous correct answer will add extra one mark for the next correct answer.
-          </Text>
+            <Text style={styles.gameRulesText}>
+              3) The more you answer correctly continuously, the more points you can get for the next correct answer. Every extra continuous correct answer will add extra one mark for the next correct answer.
+            </Text>
 
-          <Text style={styles.gameRulesText}>
-            4) Any answer that is given later than 5 seconds, no scores will be given, but it will be counted as a continuous correct answer.
-          </Text>
+            <Text style={styles.gameRulesText}>
+              4) Any answer that is given later than 5 seconds, no scores will be given, but it will be counted as a continuous correct answer.
+            </Text>
 
-          <View>
-
-          {
-            startGameAction === "None" && 
             <View>
-              <View>
-                <Button
-                  title="New User"
-                  onPress={() => setStartGameAction("Create User")}
-                />
-              </View>
-
-              <View style={styles.loginBtn}>
-                <Button
-                  title="Login"
-                  onPress={() => setStartGameAction("Login")}
-                />
-              </View>
-            </View>
-          }
 
             {
-              startGameAction === "Create User" && 
+              startGameAction === "None" && 
               <View>
-
-                <TextInput
-                  style={styles.input}
-                  onChangeText={text => setUsername(text)}
-                  placeholder="Type your name"
-                  keyboardType="default"
-                />
-
-                <View>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={text => setPassword(text)}
-                    placeholder="Please enter password to register yourself"
-                    keyboardType="visible-password"
-                  />
-                </View>
-
                 <View>
                   <Button
-                    title="Create User"
-                    onPress={startGame}
+                    title="New User"
+                    onPress={() => setStartGameAction("Create User")}
                   />
                 </View>
 
-                <View style={styles.backBtn}>
-                  <Button
-                    title="Back"
-                    color="#bab9b5"
-                    onPress={() => {setStartGameAction("None"); setUsername(""); setPassword("")}}
-                  />
-                </View>
-
-              </View>
-
-            }
-
-            {
-              startGameAction === "Login" && 
-              <View>
-
-                <TextInput
-                  style={styles.input}
-                  onChangeText={text => setUsername(text)}
-                  placeholder="Type your name"
-                  keyboardType="default"
-                />
-
-                <View>
-                  <TextInput
-                    style={styles.input}
-                    onChangeText={text => setPassword(text)}
-                    placeholder="Password"
-                    keyboardType="visible-password"
-                  />
-                </View>
-                
-                <View>
+                <View style={styles.loginBtn}>
                   <Button
                     title="Login"
-                    onPress={startGame}
+                    onPress={() => setStartGameAction("Login")}
                   />
                 </View>
-
-                <View style={styles.backBtn}>
-                  <Button
-                    title="Back"
-                    color="#bab9b5"
-                    onPress={() => {setStartGameAction("None"); setUsername(""); setPassword("")}}
-                  />
-                </View>
-
               </View>
-
             }
-            
+
+              {
+                startGameAction === "Create User" && 
+                <View>
+
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={text => setUsername(text)}
+                    placeholder="Type your name"
+                    keyboardType="default"
+                  />
+
+                  <View>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={text => setPassword(text)}
+                      placeholder="Please enter password to register yourself"
+                      keyboardType="visible-password"
+                    />
+                  </View>
+
+                  <View>
+                    <Button
+                      title="Create User"
+                      onPress={startGame}
+                    />
+                  </View>
+
+                  <View style={styles.backBtn}>
+                    <Button
+                      title="Back"
+                      color="#bab9b5"
+                      onPress={() => {setStartGameAction("None"); setUsername(""); setPassword("")}}
+                    />
+                  </View>
+
+                </View>
+
+              }
+
+              {
+                startGameAction === "Login" && 
+                <View>
+
+                  <TextInput
+                    style={styles.input}
+                    onChangeText={text => setUsername(text)}
+                    placeholder="Type your name"
+                    keyboardType="default"
+                  />
+
+                  <View>
+                    <TextInput
+                      style={styles.input}
+                      onChangeText={text => setPassword(text)}
+                      placeholder="Password"
+                      keyboardType="visible-password"
+                    />
+                  </View>
+                  
+                  <View>
+                    <Button
+                      title="Login"
+                      onPress={startGame}
+                    />
+                  </View>
+
+                  <View style={styles.backBtn}>
+                    <Button
+                      title="Back"
+                      color="#bab9b5"
+                      onPress={() => {setStartGameAction("None"); setUsername(""); setPassword("")}}
+                    />
+                  </View>
+
+                </View>
+
+              }
+              
+            </View>
           </View>
+        </Modal>
+
+        <View style={styles.scoreboard}>
+          <Text style={styles.boardText}>Total Scores: {totalScores}</Text>
+          <Text style={styles.boardText}>Continuous Correct Answer: {conCorrectAns}</Text>
+          <Text style={styles.boardText}>Total Correct Answer:{totalCorrectAns}</Text>
         </View>
-      </Modal>
 
-      <View style={styles.scoreboard}>
-        <Text style={styles.boardText}>Total Scores: {totalScores}</Text>
-        <Text style={styles.boardText}>Continuous Correct Answer: {conCorrectAns}</Text>
-        <Text style={styles.boardText}>Total Correct Answer:{totalCorrectAns}</Text>
-      </View>
+        {
+          readingTime !== 0 &&
+          <Text style={styles.readingTime}>Reading Time left: {readingTime}</Text>
+        }
 
-      {
-        readingTime !== 0 &&
-        <Text style={styles.readingTime}>Reading Time left: {readingTime}</Text>
-      }
+        {
+          answerTime !== 0 &&
+          <Text style={styles.readingTime}>Answer Time left: {answerTime}</Text>
+        }
+        <Text style={styles.questionText}>{questionCount + ". " + questionText}</Text>
 
-      {
-        answerTime !== 0 &&
-        <Text style={styles.readingTime}>Answer Time left: {answerTime}</Text>
-      }
-      <Text style={styles.questionText}>{questionCount + ". " + questionText}</Text>
-
-      <View>
-      <CheckBox
-          style={styles.checkbox}
-          disabled={answerCheck !== 0 || option1 === "Loading option..."}
-          title={option1}
-          checked={answerCheck === option1}
-          onPress={() => answerQuestion(option1)}
-        />
-
+        <View>
         <CheckBox
-          style={styles.checkbox}
-          disabled={answerCheck !== 0 || option2 === "Loading option..."}
-          title={option2}
-          checked={answerCheck === option2}
-          onPress={() => answerQuestion(option2)}
+            style={styles.checkbox}
+            disabled={answerCheck !== 0 || option1 === "Loading option..."}
+            title={option1}
+            checked={answerCheck === option1}
+            onPress={() => answerQuestion(option1)}
+          />
+
+          <CheckBox
+            style={styles.checkbox}
+            disabled={answerCheck !== 0 || option2 === "Loading option..."}
+            title={option2}
+            checked={answerCheck === option2}
+            onPress={() => answerQuestion(option2)}
+          />
+
+          <CheckBox
+            style={styles.checkbox}
+            disabled={answerCheck !== 0 || option3 === "Loading option..."}
+            title={option3}
+            checked={answerCheck === option3}
+            onPress={() => answerQuestion(option3)}
+          />
+
+          <CheckBox
+            style={styles.checkbox}
+            disabled={answerCheck !== 0 || option4 === "Loading option..."}
+            title={option4}
+            checked={answerCheck === option4}
+            onPress={() => answerQuestion(option4)}
+          />
+        </View>
+
+        <Button
+          title="Reading Question"
+          onPress={() => readQuestion()}
         />
 
-        <CheckBox
-          style={styles.checkbox}
-          disabled={answerCheck !== 0 || option3 === "Loading option..."}
-          title={option3}
-          checked={answerCheck === option3}
-          onPress={() => answerQuestion(option3)}
-        />
+        <View style={styles.rankingBoard}>
+          <Text style={styles.rankingBoardTitle}>Top 10 Ranking</Text>
+          
+          <View>
+            <View style={styles.rankingListContainer}>
+              <Text style={[styles.rankingBoardText, styles.rankingItem]} >
+                User Name
+              </Text>
 
-        <CheckBox
-          style={styles.checkbox}
-          disabled={answerCheck !== 0 || option4 === "Loading option..."}
-          title={option4}
-          checked={answerCheck === option4}
-          onPress={() => answerQuestion(option4)}
-        />
-      </View>
+              <Text style={[styles.rankingBoardText, styles.rankingItem]}>
+                Scores
+              </Text>
+            </View>
 
-      <Button
-        title="Reading Question"
-        onPress={() => readQuestion()}
-      />
+            {        
+              scoreRanking.map((score, index) => {
+                ranking++;
+                // const uniqueKey = crypto.randomUUID();
+                return(
+                  <View style={styles.rankingListContainer} key={index}>
+                    <Text 
+                      style={[styles.rankingBoardText, styles.rankingItem]}
+                    >
+                      {ranking + ". "} {score.username} 
+                    </Text>
 
-      <View style={styles.rankingBoard}>
-        <Text style={styles.rankingBoardText}>HAHAHA</Text>
+                    <Text 
+                      style={[styles.rankingBoardText, styles.rankingItem]}
+                    >
+                      {score.highestScore}
+                    </Text>
+                  </View>
+                )
+              })
+            }
+          </View>
+          
+        </View>
+
       </View>
     </ScrollView>
   );
