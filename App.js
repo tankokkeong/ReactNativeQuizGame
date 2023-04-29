@@ -30,11 +30,14 @@ export default function App() {
   const [userHighestScore, setUserHighestScore] = useState(0);
   const [displayRankingBoard, setDisplayRankingBoard] = useState(true);
   const [scoreRanking, setScoreRanking] = useState([]);
+  const [isRestartGame, setIsRestartGame] = useState(false);
   const db = getDatabase();
   var ranking = 0;
 
   const readQuestion = async() =>{
     
+    setIsRestartGame(false);
+
     if(displayRankingBoard){
       rankingBoard();
     }
@@ -252,17 +255,34 @@ export default function App() {
     setAnswerTime(0);
     setReadingTime(0);
     setModalVisible(true);
+
+    //Reset scores
+    setQuestionCount(0);
     setTotalCorrectAns(0);
     setTotalScores(0);
     setConCorrectAns(0);
   };
 
   const restartGame = () => {
-    setQuestionCount(1);
-    readQuestion();
+    showToast("Restarting...");
+    setQuestionCount(0);
+    setIsRestartGame(true);
+    setAnswerCheck(-1);
+    setAnswerTime(0);
+    setReadingTime(0);
+
+    //Reset scores
+    setQuestionCount(0);
+    setTotalCorrectAns(0);
+    setTotalScores(0);
+    setConCorrectAns(0);
   };
 
   useEffect(() => {
+
+    if(isRestartGame){
+      readQuestion();
+    }
 
     if(readingTime !== 0){
       const interval = setInterval(() => displayReadingTimer(), 1000);
