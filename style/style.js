@@ -71,5 +71,8 @@ export const styles = StyleSheet.create({
     },
     rankingItem: {
         width: '50%' // is 50% of container width
+    },
+    restartGameBtn:{
+        marginTop: 10
     }
 });

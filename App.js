@@ -34,7 +34,7 @@ export default function App() {
   var ranking = 0;
 
   const readQuestion = async() =>{
-
+    
     if(displayRankingBoard){
       rankingBoard();
     }
@@ -42,25 +42,35 @@ export default function App() {
     //Block the option
     setAnswerCheck(-1);
 
-    //Read question
-    var randomQuestion = Math.floor(Math.random() * 151) + 1;
-    setQuestionCount(questionCount + 1);
-    await get(child(dbRef, `Questions/${"Question-" + randomQuestion}`)).then((snapshot) => {
-      if (snapshot.exists()) {
-        console.log(snapshot.val())
-        setQuestionText(snapshot.val().question);
-        setOption1(snapshot.val().option_1);
-        setOption2(snapshot.val().option_2);
-        setOption3(snapshot.val().option_3);
-        setOption4(snapshot.val().option_4);
-        setCurrentAnswer(snapshot.val().answer);
-        setReadingTime(10);
-      } else {
-        console.log("No data available");
-      }
-    }).catch((error) => {
-      console.error(error);
-    });
+    if(questionCount < 1){
+      //Read question
+      var randomQuestion = Math.floor(Math.random() * 151) + 1;
+      setQuestionCount(questionCount + 1);
+      await get(child(dbRef, `Questions/${"Question-" + randomQuestion}`)).then((snapshot) => {
+        if (snapshot.exists()) {
+          console.log(snapshot.val())
+          setQuestionText(snapshot.val().question);
+          setOption1(snapshot.val().option_1);
+          setOption2(snapshot.val().option_2);
+          setOption3(snapshot.val().option_3);
+          setOption4(snapshot.val().option_4);
+          setCurrentAnswer(snapshot.val().answer);
+          setReadingTime(10);
+        } else {
+          console.log("No data available");
+        }
+      }).catch((error) => {
+        console.error(error);
+      });
+    }
+    else{
+      Alert.alert('Game Over', 'The game is over now you can either restart or quit the game. ', 
+      [
+        {
+          text: 'Confirm',
+        },
+      ]);
+    }
   }
 
   const answerQuestion = async (answer) => {
@@ -242,6 +252,14 @@ export default function App() {
     setAnswerTime(0);
     setReadingTime(0);
     setModalVisible(true);
+    setTotalCorrectAns(0);
+    setTotalScores(0);
+    setConCorrectAns(0);
+  };
+
+  const restartGame = () => {
+    setQuestionCount(1);
+    readQuestion();
   };
 
   useEffect(() => {
@@ -259,7 +277,9 @@ export default function App() {
 
   return (
     <ScrollView>
-      <View style={styles.container}>
+      <View 
+        style={styles.container}>
+
         <Modal visible={modalVisibile}>
           <View style={styles.gameRulesView}>
             <Text style={[styles.gameRulesText, styles.gameRulesTitle]}>Game Rules:</Text>
@@ -434,10 +454,22 @@ export default function App() {
           />
         </View>
 
-        <Button
-          title="Quit Game"
-          onPress={() => quitGame()}
-        />
+        <View>
+          <Button
+            color="#e33434"
+            title="Quit Game"
+            onPress={() => quitGame()}
+          />
+        </View>
+
+        <View style={styles.restartGameBtn}>
+          <Button
+            color="#eba834"
+            title="Restart Game"
+            onPress={() => restartGame()}
+          />
+        </View>
+
 
         <View style={styles.rankingBoard}>
           <Text style={styles.rankingBoardTitle}>Top 10 Ranking</Text>
