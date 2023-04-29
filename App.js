@@ -8,9 +8,8 @@ import { dbRef } from './firebaseConfig';
 import { hashCode, showToast } from './helper';
 
 export default function App() {
-  const [answerCheck, setAnswerCheck] = useState(0);
+  const [answerCheck, setAnswerCheck] = useState(-1);
   const [questionText, setQuestionText] = useState("Loading question...");
-  const [readNextQuestion, setReadNextQuestion] = useState(true);
   const [option1, setOption1] = useState("Loading option...");
   const [option2, setOption2] = useState("Loading option...");
   const [option3, setOption3] = useState("Loading option...");
@@ -18,6 +17,7 @@ export default function App() {
   const [currentAnswer, setCurrentAnswer] = useState(0);
   const [questionCount, setQuestionCount] = useState(0);
   const [readingTime, setReadingTime] = useState(0);
+  const [answerTime, setAnswerTime] = useState(0);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [startGameAction, setStartGameAction] = useState("None");
@@ -29,12 +29,12 @@ export default function App() {
   const db = getDatabase();
 
   const readQuestion = async() =>{
-    //Reset the option
-    setAnswerCheck(0);
+
+    //Block the option
+    setAnswerCheck(-1);
 
     //Read question
     var randomQuestion = Math.floor(Math.random() * 151) + 1;
-    setReadNextQuestion(false);
     setQuestionCount(questionCount + 1);
     await get(child(dbRef, `Questions/${"Question-" + randomQuestion}`)).then((snapshot) => {
       if (snapshot.exists()) {
@@ -45,7 +45,7 @@ export default function App() {
         setOption3(snapshot.val().option_3);
         setOption4(snapshot.val().option_4);
         setCurrentAnswer(snapshot.val().answer);
-        setReadingTime(15);
+        setReadingTime(10);
       } else {
         console.log("No data available");
       }
@@ -66,8 +66,8 @@ export default function App() {
       //Score calculation
       var scoreOfTheRound;
 
-      if(readingTime >= 10){
-          scoreOfTheRound = 5 + (readingTime - 10) + continuousCorrect;
+      if(answerTime >= 10){
+          scoreOfTheRound = 5 + (answerTime - 10) + continuousCorrect;
       }
       else{
           scoreOfTheRound = 0;
@@ -203,6 +203,16 @@ export default function App() {
     setReadingTime(readingTime - 1);
 
     if(readingTime - 1 === 0){
+      setAnswerTime(15);
+      setAnswerCheck(0);
+    }
+  }
+
+  function displayAnswerTimer(){
+
+    setAnswerTime(answerTime - 1);
+
+    if(answerTime - 1 === 0){
       readQuestion();
     }
   }
@@ -212,6 +222,10 @@ export default function App() {
     console.log("Start Game Action: " + startGameAction)
     if(readingTime !== 0){
       const interval = setInterval(() => displayReadingTimer(), 1000);
+      return () => clearInterval(interval);
+    }
+    else if(answerTime !== 0){
+      const interval = setInterval(() => displayAnswerTimer(), 1000);
       return () => clearInterval(interval);
     }
 
@@ -348,7 +362,15 @@ export default function App() {
         <Text style={styles.boardText}>Total Correct Answer:{totalCorrectAns}</Text>
       </View>
 
-      <Text style={styles.readingTime}>Reading Time left: {readingTime}</Text>
+      {
+        readingTime !== 0 &&
+        <Text style={styles.readingTime}>Reading Time left: {readingTime}</Text>
+      }
+
+      {
+        answerTime !== 0 &&
+        <Text style={styles.readingTime}>Answer Time left: {answerTime}</Text>
+      }
       <Text style={styles.questionText}>{questionCount + ". " + questionText}</Text>
 
       <CheckBox
