@@ -155,7 +155,7 @@ export default function App() {
               password: hashCode(password)
             })
             .then(() => {
-              Alert.alert('Successful', 'User created sucessful!', [
+              Alert.alert('Successful', 'User created sucessful! You may login now.', [
                 {
                   text: 'Confirm',
                 },
