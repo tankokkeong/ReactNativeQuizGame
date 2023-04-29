@@ -1,9 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, ScrollView, Alert
+import { styles } from './style/style';
+import { Text, View, Button, ScrollView, Alert
 , Modal, TextInput } from 'react-native';
 import { CheckBox } from '@rneui/themed';
 import React, { useState, useEffect } from 'react';
-import { getDatabase, ref, child, get, set, update} from "firebase/database";
+import { getDatabase, ref, child, get, set, update
+, query, orderByChild, limitToLast, onValue } from "firebase/database";
 import { dbRef } from './firebaseConfig';
 import { hashCode, showToast } from './helper';
 
@@ -21,11 +23,13 @@ export default function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [startGameAction, setStartGameAction] = useState("None");
-  const [modalVisibile, setModalVisible] = useState(true);
+  const [modalVisibile, setModalVisible] = useState(false);
   const [totalScores, setTotalScores] = useState(0);
   const [conCorrectAns, setConCorrectAns] = useState(0);
   const [totalCorrectAns, setTotalCorrectAns] = useState(0);
   const [userHighestScore, setUserHighestScore] = useState(0);
+  const [displayRankingBoard, setDisplayRankingBoard] = useState(true);
+  const [scoreRanking, setScoreRanking] = useState([]);
   const db = getDatabase();
 
   const readQuestion = async() =>{
@@ -58,16 +62,11 @@ export default function App() {
     setAnswerCheck(answer);
     console.log("Answer given: " + answer)
     if(answer === currentAnswer){
-      var totalScr = totalScores;
-      var continuousCorrect = conCorrectAns;
-      var totalCorrect = totalCorrectAns;
-      var highestScore = userHighestScore;
-
       //Score calculation
       var scoreOfTheRound;
 
       if(answerTime >= 10){
-          scoreOfTheRound = 5 + (answerTime - 10) + continuousCorrect;
+          scoreOfTheRound = 5 + (answerTime - 10) + conCorrectAns;
       }
       else{
           scoreOfTheRound = 0;
@@ -77,21 +76,14 @@ export default function App() {
 
       const updates = {};
       updates[`users/${username}/continuousCorrect`] = conCorrectAns + 1;
-      updates[`users/${username}/highestScore`] = newTotal > highestScore ? newTotal : highestScore;
+      updates[`users/${username}/highestScore`] = newTotal > userHighestScore ? newTotal : userHighestScore;
       updates[`users/${username}/scores`] = newTotal;
       updates[`users/${username}/totalCorrect`] = totalCorrectAns + 1;
 
-      await update(ref(db), updates).then(() => {
-        // Data saved successfully!
-        console.log("Successfully update")
-      })
-      .catch((error) => {
-        // The write failed...
-        console.log(error)
-      });
+      await update(ref(db), updates);
 
       //Check the highest score
-      if(newTotal > highestScore){
+      if(newTotal > userHighestScore){
         setUserHighestScore(newTotal);
       }
       
@@ -103,6 +95,11 @@ export default function App() {
       showToast("You get it correct!");
     }
     else{
+      const updates = {};
+      setConCorrectAns(0);
+      updates[`users/${username}/continuousCorrect`] =  0;
+      await update(ref(db), updates);
+
       showToast("Your answer is wrong!");
     }
   };
@@ -217,9 +214,27 @@ export default function App() {
     }
   }
 
+  const rankingBoard = () => {
+    const rankingRef = query(ref(db, 'users/'), orderByChild("highestScore"), limitToLast(3));
+    
+    onValue(rankingRef, (snapshot) => {
+      console.log("Is Array: " + Array.isArray(snapshot))
+      snapshot.forEach((snapChild) => {
+        const data = snapChild.val();
+        console.log(data)
+      });
+
+    });
+
+    setDisplayRankingBoard(false);
+  };
+
   useEffect(() => {
 
-    console.log("Start Game Action: " + startGameAction)
+    if(displayRankingBoard){
+      rankingBoard();
+    }
+
     if(readingTime !== 0){
       const interval = setInterval(() => displayReadingTimer(), 1000);
       return () => clearInterval(interval);
@@ -373,6 +388,7 @@ export default function App() {
       }
       <Text style={styles.questionText}>{questionCount + ". " + questionText}</Text>
 
+      <View>
       <CheckBox
           style={styles.checkbox}
           disabled={answerCheck !== 0 || option1 === "Loading option..."}
@@ -404,62 +420,16 @@ export default function App() {
           checked={answerCheck === option4}
           onPress={() => answerQuestion(option4)}
         />
+      </View>
 
       <Button
         title="Reading Question"
         onPress={() => readQuestion()}
       />
+
+      <View style={styles.rankingBoard}>
+        <Text style={styles.rankingBoardText}>HAHAHA</Text>
+      </View>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
-  },
-  questionText:{
-    marginBottom:20,
-    paddingTop:25,
-    fontSize: 20,
-  },
-  checkbox:{
-
-  },
-  scoreboard:{
-    backgroundColor: "black",
-    width: "100%",
-    padding: 10,
-    marginTop: 20,
-  },
-  boardText:{
-    color: "white"
-  },
-  readingTime:{
-    marginTop: 10,
-    fontSize: 18
-  },
-  gameRulesView:{
-    padding: 20,
-  },
-  gameRulesText:{
-    fontSize:15,
-    marginBottom:10
-  },
-  gameRulesTitle:{
-    fontWeight: 'bold'
-  },
-  input: {
-    height: 40,
-    borderWidth: 1,
-    marginBottom: 10,
-    padding: 10,
-  },
-  loginBtn: {
-    marginTop: 10,
-  },
-  backBtn: {
-    marginTop: 10,
-  }
-});
