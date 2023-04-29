@@ -34,7 +34,7 @@ export default function App() {
   var ranking = 0;
 
   const readQuestion = async() =>{
-    
+
     if(displayRankingBoard){
       rankingBoard();
     }
@@ -237,6 +237,13 @@ export default function App() {
     setDisplayRankingBoard(false);
   };
 
+  const quitGame = () => {
+    setAnswerCheck(-1);
+    setAnswerTime(0);
+    setReadingTime(0);
+    setModalVisible(true);
+  };
+
   useEffect(() => {
 
     if(readingTime !== 0){
@@ -249,12 +256,6 @@ export default function App() {
     }
 
   });
-
-  const logo = {
-    uri: 'https://reactnative.dev/img/tiny_logo.png',
-    width: 64,
-    height: 64,
-  };
 
   return (
     <ScrollView>
@@ -434,8 +435,8 @@ export default function App() {
         </View>
 
         <Button
-          title="Reading Question"
-          onPress={() => readQuestion()}
+          title="Quit Game"
+          onPress={() => quitGame()}
         />
 
         <View style={styles.rankingBoard}>
