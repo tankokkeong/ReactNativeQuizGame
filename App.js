@@ -32,6 +32,7 @@ export default function App() {
   const [scoreRanking, setScoreRanking] = useState([]);
   const [isRestartGame, setIsRestartGame] = useState(false);
   const db = getDatabase();
+  const questionGiven = 20;
   var ranking = 0;
 
   const readQuestion = async() =>{
@@ -45,7 +46,7 @@ export default function App() {
     //Block the option
     setAnswerCheck(-1);
 
-    if(questionCount < 1){
+    if(questionCount < questionGiven){
       //Read question
       var randomQuestion = Math.floor(Math.random() * 151) + 1;
       setQuestionCount(questionCount + 1);
